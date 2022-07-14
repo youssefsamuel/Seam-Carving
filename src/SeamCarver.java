@@ -4,7 +4,7 @@ import edu.princeton.cs.algs4.Picture;
 
 public class SeamCarver {
     private Picture currentPicture;
-    private int currentWidth;
+    private int currentWidth; // width of the picture.
     private int currentHeight;
 
     // create a seam carver object based on the given picture
@@ -33,12 +33,16 @@ public class SeamCarver {
 
     // energy of pixel at column x and row y
     public double energy(int x, int y) {
-        if (x < 0 || x >= this.width() || y < 0 || y >= this.height())
+        if (x < 0 || x >= this.width() || y < 0 || y >= this.height()) // check that x and y are within the allowed
+                                                                       // range.
             throw new IllegalArgumentException();
-        if (x == 0 || x == this.width() - 1 || y == 0 || y == this.height() - 1)
+        if (x == 0 || x == this.width() - 1 || y == 0 || y == this.height() - 1) // if the pixel is on the border of the
+                                                                                 // picture its energy = 1000.
             return 1000;
         int rgbLeft = this.currentPicture.getRGB(x - 1, y);
         int rgbRight = this.currentPicture.getRGB(x + 1, y);
+        // The red (R), green (G), and blue (B) components are encoded using the least
+        // significant 24 bits.
         int rLeft = (rgbLeft >> 16) & 0xFF;
         int gLeft = (rgbLeft >> 8) & 0xFF;
         int bLeft = (rgbLeft >> 0) & 0xFF;
@@ -58,12 +62,16 @@ public class SeamCarver {
         return Math.sqrt(deltaY + deltaX);
     }
 
+    // This function is used to get the index in a 1d array from the indices in a 2d
+    // array.
     private int getIndex(int x, int y) {
         if (x < 0 || x >= this.width() || y < 0 || y >= this.height())
             throw new IllegalArgumentException();
         return x + (this.currentWidth * y);
     }
 
+    // The next two functions are used to get the row and column of an element in a
+    // 2d array given its position in a 1d array.
     private int getX(int index) {
         return index % this.width();
     }
@@ -74,33 +82,41 @@ public class SeamCarver {
 
     // sequence of indices for horizontal seam
     public int[] findHorizontalSeam() {
-        int[] hrzSeam = new int[this.width()];
+        int[] hrzSeam = new int[this.width()]; // the array that will contain the indices of the pixels of the
+                                               // horizontal seam.
         if (this.width() == 1) {
             hrzSeam[0] = 0;
             return hrzSeam;
         }
-        double[] distTo = new double[this.currentWidth * this.currentHeight];
+        double[] distTo = new double[this.currentWidth * this.currentHeight]; // 1d array to contain the total weight of
+                                                                              // the path from the beginning to pixel i.
         for (int i = 0; i < this.currentWidth * this.currentHeight; i++) {
-            distTo[i] = Integer.MAX_VALUE;
+            distTo[i] = Integer.MAX_VALUE; // assume at the beginning each pixel is away from the start a distance equal
+                                           // to infinity.
         }
-        int[] parent = new int[this.currentWidth * this.currentHeight];
-        for (int i = 0; i < this.width(); i++) {
+        int[] parent = new int[this.currentWidth * this.currentHeight]; // 1d array used to get the pixel before the
+                                                                        // current pixel in the path.
+        for (int i = 0; i < this.width(); i++) { // loop on each pixel and relax its neighbors.
             for (int j = 0; j < this.height(); j++) {
                 if (i == 0) {
-                    distTo[getIndex(i, j)] = 1000;
+                    distTo[getIndex(i, j)] = 1000; // if its a border pixel.
                     parent[getIndex(i, j)] = -1;
                 }
+                // Three cases can happen when relaxing the neighbor pixels.
+                // CASE 1: Relax the pixel on the bottom right.
                 if (j - 1 >= 0 && i + 1 < currentWidth)
                     if (distTo[getIndex(i + 1, j - 1)] > distTo[getIndex(i, j)] + energy(i + 1, j - 1)) {
                         distTo[getIndex(i + 1, j - 1)] = distTo[getIndex(i, j)] + energy(i + 1, j - 1);
                         parent[getIndex(i + 1, j - 1)] = getIndex(i, j);
 
                     }
+                // CASE 2: Relax the pixel on the right.
                 if (i + 1 < currentWidth)
                     if (distTo[getIndex(i + 1, j)] > distTo[getIndex(i, j)] + energy(i + 1, j)) {
                         distTo[getIndex(i + 1, j)] = distTo[getIndex(i, j)] + energy(i + 1, j);
                         parent[getIndex(i + 1, j)] = getIndex(i, j);
                     }
+                // CASE 3: Relax the pixel on the top right.
                 if (i + 1 < currentWidth && j + 1 < currentHeight)
                     if (distTo[getIndex(i + 1, j + 1)] > distTo[getIndex(i, j)] + energy(i + 1, j + 1)) {
                         distTo[getIndex(i + 1, j + 1)] = distTo[getIndex(i, j)] + energy(i + 1, j + 1);
@@ -108,6 +124,10 @@ public class SeamCarver {
                     }
             }
         }
+        // Now we want to get the pixel on the right of the image that has the minimum
+        // distance from the start in the left.
+        // Once we get it, a stack is used to push the index of each pixel on the
+        // shortest path.
         int min = Integer.MAX_VALUE;
         double minSum = Integer.MAX_VALUE;
         Stack<Integer> s = new Stack<>();
@@ -127,6 +147,7 @@ public class SeamCarver {
         j = s.peek();
         s.push(j);
         int i = 0;
+        // Pop the indices from the stack into the array to be returned.
         while (!s.isEmpty()) {
             int z = s.pop();
             hrzSeam[i] = z;
@@ -136,6 +157,7 @@ public class SeamCarver {
     }
 
     // sequence of indices for vertical seam
+    // similar to the previous function.
     public int[] findVerticalSeam() {
         int[] vertSeam = new int[this.height()];
         if (this.height() == 1) {
@@ -214,6 +236,9 @@ public class SeamCarver {
             }
         }
         Picture newPic = new Picture(this.currentWidth, this.currentHeight - 1);
+        // A new picture is to be created by setting the pixels colors as those of the
+        // original picture but the difference is that we discard the pixels on the
+        // seam.
         for (int i = 0; i < this.currentWidth; i++) {
             int newJ = 0;
             int skipJ = seam[i];
