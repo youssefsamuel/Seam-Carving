@@ -6,4 +6,4 @@ This code can find the vertical seam and horizontal seam of any image and then t
 This is an application related to graphs processing. Finding the shortest path in a graph is a very important application.
 The graph here is a DAG.
 Each vertex is a pixel and each pixel has a weight equal to its energy function.
-More details about the sepecifications of the problem can be found here: https://coursera.cs.princeton.edu/algs4/assignments/seam/specification.php.
+More details about the sepecifications of the problem can be found here: https://coursera.cs.princeton.edu/algs4/assignments/seam/specification.php
